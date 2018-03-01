@@ -7,7 +7,6 @@
 #pragma hdrstop
 
 #include "Game_local.h"
-
 #include "ai/AI.h"
 #include "ai/AI_Manager.h"
 #include "Weapon.h"
@@ -200,6 +199,8 @@ idInventory::Clear
 */
 void idInventory::Clear( void ) {
 	maxHealth			= 0;
+	maxMana				= 0;
+	maxStamina			= 0;
 	weapons				= 0;
 	carryOverWeapons	= 0;
 	powerups			= 0;
@@ -337,8 +338,10 @@ void idInventory::RestoreInventory( idPlayer *owner, const idDict &dict ) {
 
 	// health/armor
 	maxHealth		= dict.GetInt( "maxhealth", "100" );
+	maxMana			= dict.GetInt("maxMana", "100");
 	armor			= dict.GetInt( "armor", "50" );
 	maxarmor		= dict.GetInt( "maxarmor", "100" );
+	maxStamina = dict.GetInt("maxstamina", "100");
 
 	// ammo
 	for( i = 0; i < MAX_AMMOTYPES; i++ ) {
@@ -1840,6 +1843,7 @@ void idPlayer::Spawn( void ) {
 		// load HUD
 		hud = NULL;
 		mphud = NULL;
+		statusOverlay = NULL;
  		
 		overlayHud = NULL;
 		overlayHudTime = 0;
@@ -1848,6 +1852,15 @@ void idPlayer::Spawn( void ) {
 
 		if ( spawnArgs.GetString( "hud", "", temp ) ) {
 			hud = uiManager->FindGui( temp, true, false, true );
+			statusOverlay = uiManager->FindGui("pak021/guis/magicoverlay.gui", true, false, true);
+			if (uiManager->CheckGui("pak021/guis/magicoverlay.gui")){
+				gameLocal.Printf("MAGIC OVERLAY FOUND");
+
+				hud = uiManager->FindGui("pak021/guis/magicoverlay.gui", true, false, true);
+			}
+			else{
+				gameLocal.Printf("MAGIC OVERLAY NOT FOUND");
+			}
 		} else {
 			gameLocal.Warning( "idPlayer::Spawn() - No hud for player." );
 		}
@@ -1863,6 +1876,7 @@ void idPlayer::Spawn( void ) {
 		if ( hud ) {
 			hud->Activate( true, gameLocal.time );
 		}
+		
 
 		if ( mphud ) {
 			mphud->Activate( true, gameLocal.time );
@@ -3379,7 +3393,7 @@ void idPlayer::UpdateHudAmmo( idUserInterface *_hud ) {
 		_hud->SetStateInt ( "player_ammo", -1 );
 	} 
 
-	_hud->SetStateBool( "player_ammo_empty", ( ammoamount == 0 ) );
+	_hud->SetStateBool("player_ammo_empty", (ammoamount == 0));
 }
 
 /*
@@ -3392,12 +3406,21 @@ void idPlayer::UpdateHudStats( idUserInterface *_hud ) {
 	
 	assert ( _hud );
 
-	temp = _hud->State().GetInt ( "player_health", "-1" );
-	if ( temp != health ) {		
-		_hud->SetStateInt   ( "player_healthDelta", temp == -1 ? 0 : (temp - health) );
-		_hud->SetStateInt	( "player_health", health < -100 ? -100 : health );
-		_hud->SetStateFloat	( "player_healthpct", idMath::ClampFloat ( 0.0f, 1.0f, (float)health / (float)inventory.maxHealth ) );
-		_hud->HandleNamedEvent ( "updateHealth" );
+	temp = _hud->State().GetVec4("health").z;
+	if ( temp != health ) {	
+		//float val;
+		//val = temp / inventory.maxHealth;
+
+		_hud->SetStateVec4("health", *new idVec4(0,0,100,10));
+
+		_hud->HandleNamedEvent("SetHealth");
+
+		gameLocal.Printf("\n\n");
+		gameLocal.Printf(_hud->State().GetVec4("healthBar::rect").ToString());
+		gameLocal.Printf("\n\n");
+
+		_hud->HandleNamedEvent("SetHealth");
+		gameLocal.Printf(_hud->State().GetVec4("healthBar::rect").ToString());
 	}
 		
 	temp = _hud->State().GetInt ( "player_armor", "-1" );
@@ -3436,7 +3459,7 @@ void idPlayer::UpdateHudStats( idUserInterface *_hud ) {
 		UpdateHudAmmo( _hud );
 	}
 	
-	_hud->StateChanged( gameLocal.time );
+	_hud->StateChanged(gameLocal.time);
 }
 
 /*
@@ -5037,8 +5060,8 @@ void idPlayer::UpdatePowerUps( void ) {
 		flagEffect->Attenuate( idMath::ClampFloat( 0.0f, 1.0f, physicsObj.GetLinearVelocity().LengthSqr() / Square(100.0f) ) );
 	}
 
-	if( arenaEffect ) {
-		arenaEffect->SetOrigin( vec3_zero );
+	if (arenaEffect) {
+		arenaEffect->SetOrigin(vec3_zero);
 	}
 }
 
@@ -9166,6 +9189,8 @@ void idPlayer::UpdateHud( void ) {
 	if ( entityNumber != gameLocal.localClientNum ) {
 		return;
 	}
+
+
 
 	// FIXME: this is here for level ammo balancing to see pct of hits 
 	hud->SetStateInt( "g_showProjectilePct", g_showProjectilePct.GetInteger() );

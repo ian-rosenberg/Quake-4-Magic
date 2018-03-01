@@ -491,6 +491,8 @@ idEntity::idEntity() {
 	renderView		= NULL;
 	cameraTarget	= NULL;
 	health			= 0;
+	mana			= 0;
+	stamina			= 0;
 
 	physics			= NULL;
 	bindMaster		= NULL;

@@ -195,6 +195,8 @@ const int	ASYNC_PLAYER_TOURNEY_STATUS_BITS = idMath::BitsForInteger( PTS_NUM_STA
 class idInventory {
 public:
 	int						maxHealth;
+	int						maxMana;
+	int						maxStamina;
 	int						weapons;
 // RITUAL BEGIN
 // squirrel: Mode-agnostic buymenus
@@ -256,6 +258,9 @@ public:
 	int						HasAmmo( int index, int amount );
 	bool					UseAmmo( int index, int amount );
 	int						HasAmmo( const char *weapon_classname );			// looks up the ammo information for the weapon class first
+//IAN BEGIN
+	int						HasMana();
+//IAN END
 
 	int						nextItemPickup;
 	int						nextItemNum;
@@ -340,6 +345,7 @@ public:
 
  	idUserInterface *		hud;				// Common hud
 	idUserInterface *		mphud;				// hud overlay containing MP elements
+	idUserInterface *		statusOverlay;
 	
 	idUserInterface *		objectiveSystem;
 	idUserInterface *		cinematicHud;
@@ -640,6 +646,7 @@ public:
 	void					ResetHUDWeaponSwitch( void );
 #endif
 	void					UpdateHudStats( idUserInterface *hud );
+	void					UpdateStatusHUD(idUserInterface *hud);
  	void					UpdateHudAmmo( idUserInterface *hud );
  	void					ShowTip( const char *title, const char *tip, bool autoHide );
  	void					HideTip( void );
